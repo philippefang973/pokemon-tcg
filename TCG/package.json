@@ -1,0 +1,13 @@
+{
+  "name": "TCG",
+  "version": "1.0.0",
+  "scripts": {
+    "start:frontend": "cd frontend && yarn start",
+    "start:backend": "cd backend && yarn start",
+    "start": "concurrently -c \"red.bold,green.bold\" --names \"frontend,backend\" \"yarn start:frontend\" \"yarn start:backend\""
+  },
+  "license": "MIT",
+  "dependencies": {
+    "concurrently": "^8.2.1"
+  }
+}

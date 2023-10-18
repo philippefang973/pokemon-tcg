@@ -1,0 +1,15 @@
+.App {
+  text-align: center;
+}
+
+body {
+  background-color: rgb(200,200,200);
+}
+
+.enlarge {
+  transition: transform 0.3s;
+}
+
+.enlarge:hover {
+  transform: scale(2.5);
+}
