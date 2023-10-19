@@ -13,9 +13,9 @@ root.render(
       logging:{
           developerMode: false,
         },
-        checkInstallationImmediately: false, // This will automatically connect to MetaMask on page load
+        checkInstallationImmediately: false,
         dappMetadata: {
-          name: "Demo React App",
+          name: "PokemonTCG",
           url: window.location.host,
         }
     }}>

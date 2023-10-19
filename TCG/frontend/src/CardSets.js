@@ -7,13 +7,13 @@ const CardSets = () => {
 
   useEffect(() => {
     // Fetch pokemon sets data from the server
-    axios.get('http://localhost:5000/sets')
+    const url = 'http://localhost:5000/sets';
+    const req = {};
+    axios.post(url,req)
       .then(response => retrieveSets(response.data))
       .catch(error => console.error(error));
   }, []);
 
-  
-  console.log(sets);
   return (
     <div>
       {Object.entries(sets).map(([setName, cards]) => (

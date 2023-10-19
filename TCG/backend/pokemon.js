@@ -45,7 +45,7 @@ module.exports = {
                 res[set["name"]] = cards;   
             };
             console.log("PokemonAPI: End");
-            console.log(res);
+            //console.log(res);
             return res;
         }
         return getPokemonData(number_sets);
