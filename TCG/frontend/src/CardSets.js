@@ -16,7 +16,6 @@ const CardSets = () => {
   console.log(sets);
   return (
     <div>
-      <h1>Welcome to Pokemon TCG!</h1>
       {Object.entries(sets).map(([setName, cards]) => (
         <div key={setName}>
           <h2>Cards Set : {setName}</h2>
