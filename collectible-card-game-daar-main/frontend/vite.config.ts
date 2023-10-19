@@ -1,20 +1,20 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
+import { defineConfig } from 'vite';
+//import react from '@vitejs/plugin-react';
+import reactRefresh from '@vitejs/plugin-react-refresh';
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [react()],
-  build: { outDir: '../backend/build', sourcemap: true },
-  resolve: {
-    alias: [{ find: '@', replacement: '/src' }],
-  },
+  plugins: [reactRefresh()],
+  build: {outDir: 'build', sourcemap: true},
   server: {
-    proxy: {
-      '/api': {
-        target: 'http://localhost:5000', // Adjust the target to match your backend server URL
-        changeOrigin: true,
-        rewrite: path => path.replace(/^\/api/, ''),
+    proxy : {
+      '/': {
+        target : "http://localhost:3000",
+        changeOrigin: true
       },
     },
   },
+  resolve: {
+    alias: [{find: '@', replacement: '/src'}],
+  }
 })
