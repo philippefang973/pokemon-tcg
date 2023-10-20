@@ -3,7 +3,9 @@ const cors = require('cors');
 const pokemonapi = require('./pokemon.js');
 const { Web3 } = require('web3');
 const constractJson = require('../contracts/artifacts/contracts/Main.sol/Main.json');
-const web3 = new Web3('http://localhost:8545');
+const provider = 'http://localhost:8545';
+const web3 = new Web3(provider);
+var bodyParser = require('body-parser')
 var deployedContract = null;
 
 async function deployContract () {
@@ -45,11 +47,21 @@ async function launchServer () {
     };
 
     app.use(cors(corsOptions));
-    
+    app.use( bodyParser.json() ); 
+
     const pokemonsets = await pokemonapi.getSets(3);
 
     app.post('/',(req,res) => {
-      res.json(deployedContract.options.address)
+      web3.eth.net.getId()
+      .then(chainId => {
+        data ={"contract": deployedContract.options.address, 
+        "chainId": "0x"+chainId.toString(16), 
+        "provider": provider};
+        res.json(data);
+      })
+      .catch(error => {
+        res.status(500).json({ error: 'Error getting chain ID' });
+      });
     });
     
     app.post('/sets', (req, res) => { //Temporary router to showcase PokemonAPI results
@@ -59,6 +71,8 @@ async function launchServer () {
 
     app.post('/all', (req, res) => {
       console.log("router /all"); //Get foreach set, all user and their possession
+      const postData = req.body;
+      console.log(postData);
       //...
     });
 

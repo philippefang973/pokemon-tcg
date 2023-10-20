@@ -14,6 +14,7 @@ const CardSets = () => {
       .catch(error => console.error(error));
   }, []);
 
+  //Rendering
   return (
     <div>
       {Object.entries(sets).map(([setName, cards]) => (
