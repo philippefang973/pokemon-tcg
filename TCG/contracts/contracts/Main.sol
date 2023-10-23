@@ -2,16 +2,20 @@
 pragma solidity ^0.8.9;
 
 import "./Collection.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract Main {
-  int private count;
-  mapping(int => Collection) private collections;
+contract Main is Ownable {
+    int private count;
+    mapping(int => Collection) private collections;
 
-  constructor() {
-    count = 0;
-  }
+    constructor() {
+        count = 0;
+    }
 
-  function createCollection(string calldata name, int cardCount) external {
-    collections[count++] = new Collection(name, cardCount);
-  }
+    function createCollection(
+        string calldata name,
+        int cardCount
+    ) external onlyOwner {
+        collections[count++] = new Collection(name, cardCount);
+    }
 }
