@@ -3,30 +3,47 @@ import CardSets from './CardSets';
 import './App.css'
 import axios from 'axios';
 
-
 export const App = () => {
+  const [sets, retrieveSets] = useState([]);
   const [net,retrieveNet] = useState(null);  //Var to store network, contract
   const [data,retrieveData] = useState(null); //Var to store response data
   const [user,setUser] = useState(null); //Var to store user
-  
+  const [userType,setUserType] = useState(null); //Var to store user type
+
   //Auto launch in startup
   useEffect(() => {
+    // Fetch pokemon sets data from the server
+    var url = 'http://localhost:5000/sets';
+    var req = {};
+    axios.post(url,req)
+      .then(response => retrieveSets(response.data))
+      .catch(error => console.error(error));
+
     // Fetch network infos from backend
-    const url = 'http://localhost:5000/';
-    const req = {};
+    url = 'http://localhost:5000/';
+    req = {};
     axios.post(url,req)
     .then(response => retrieveNet(response.data))
     .catch(error => console.error(error));
   }, []);
 
+  const getUserType = async (u) => {    
+    const url = 'http://localhost:5000/conn';
+    const req = {user:u};
+    axios.post(url,req)
+      .then(response => setUserType(response.data.userType))
+      .catch(error => console.error(error));    
+  }
+
   //Metamask Connection function
   const connect = async () => {
     try {
       const chain = await window.ethereum.request({method: "eth_chainId" });
-      if (chain == net.chainId) {
+      if (chain==net.chainId) {
         const accounts = await window.ethereum.request({method: "eth_requestAccounts" });
         console.log(accounts);
-        if (accounts.length>0) setUser(accounts[0]);
+        if (accounts.length>0) 
+          setUser(() => {getUserType(accounts[0]); return accounts[0];});
       } else {
         const accounts = await window.ethereum.request({method: "eth_requestAccounts" })
         .then(() => {
@@ -45,7 +62,8 @@ export const App = () => {
             }]
           })
         });
-        if (accounts.length>0) setUser(accounts[0]);
+        const selectedAcc = window.prompt('Choose an account', accounts);
+        if (accounts.length>0) setUser(() => {getUserType(accounts[0]); return accounts[0];});
       }
     } catch(err) {
       console.warn(`failed to connect..`);
@@ -53,17 +71,17 @@ export const App = () => {
   };
 
   //Other button-trigger functions
-  const getNFT = async () => {
+  const getNFT = (event) => {
     const url = 'http://localhost:5000/nft';
-    const req = {user:user,token:"token"};
+    const req = {user:user,token:event.target.value};
     axios.post(url,req)
       .then(response => retrieveData(response.data))
       .catch(error => console.error(error));
   };
 
-  const getUser = async () => {
+  const getUser = (event) => {
     const url = 'http://localhost:5000/user';
-    const req = {user:user,targetUser:"user"};
+    const req = {user:user,targetUser:event.target.value};
     axios.post(url,req)
       .then(response => retrieveData(response.data))
       .catch(error => console.error(error));
@@ -77,9 +95,10 @@ export const App = () => {
       .catch(error => console.error(error));
   };
 
-  const mint = async () => {
+  const mint = (event) => {
     const url = 'http://localhost:5000/mint';
-    const req = {user:user,targetUser:"user",token:"token"};
+    const [targetUser,token] = event.target.value.split(";")
+    const req = {user:user,targetUser:targetUser,token:token};
     axios.post(url,req)
       .then(response => retrieveData(response.data))
       .catch(error => console.error(error));
@@ -91,11 +110,11 @@ export const App = () => {
       <img src={process.env.PUBLIC_URL+'/pokemonlogo.png'} width="30%" height="30%"/>
       <h1></h1>
       
-      {(typeof window.ethereum == 'undefined') && (
+      {(typeof window.ethereum=='undefined') && (
         <b>MetaMask is not installed in browser, install it to connect to the network</b>
       )} 
 
-      {(typeof window.ethereum !== 'undefined') && (
+      {(typeof window.ethereum!=='undefined') && (
         <div>
         {!user && (        
           <div> 
@@ -118,9 +137,9 @@ export const App = () => {
             </div>
           )}
            <div style={{border:"solid", display: "inline-block", color:"green"}}>
-              <b>Welcome back Metamask User!</b><br/>
+              <u><b>Welcome back Metamask User!</b></u><br/>
+              <small><b>[Account type] </b><em>{userType}</em></small><br/>
               <small><b>[Connected address] </b><em>{user}</em></small>
-
               {data && (
                 <p>{data}</p>
               )}
@@ -130,17 +149,25 @@ export const App = () => {
           <button style={{padding: "20px"}} onClick={getAll}>
           <b>Show all collections</b>
           </button>
-          <button style={{padding: "20px"}} onClick={getUser}>
-          <b>Show user collection</b>
-          </button>
-          <button style={{padding: "20px"}} onClick={getNFT}>
-          <b>Show NFT</b>
-          </button>
-          <button style={{padding: "20px"}} onClick={mint}>
-          <b>Mint NFT</b>
-          </button>
+          <select style={{padding: "20px", fontWeight:'bold'}} onChange={getUser}>
+            <option value={user} selected>My collection</option>
+            <option value="Test">Test</option>
+          </select>
+          <select style={{padding: "20px", fontWeight:'bold'}} onChange={getNFT}>
+            <option disbaled hidden>Show NFT</option>
+            {Object.entries(sets).map(([setName, cards]) => (
+              <>
+              {cards.map(card => (
+                <option value={card.name}>{card.name}</option>
+                ))}
+              </>
+            ))}
+          </select>
           </div>
-          <CardSets />
+
+            {sets && (
+            <CardSets sets={sets} userType={userType} userList={[]} handler={mint}/>
+            )}
           </div>
         )}
         </div>
