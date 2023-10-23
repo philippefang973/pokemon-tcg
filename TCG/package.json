@@ -2,6 +2,7 @@
   "name": "TCG",
   "version": "1.0.0",
   "scripts": {
+    "postinstall": "(cd contracts && yarn); (cd backend && yarn); (cd frontend && yarn)",
     "start:contracts": "cd contracts && yarn start",
     "start:backend": "cd backend && yarn start",
     "start:frontend": "cd frontend && yarn start",

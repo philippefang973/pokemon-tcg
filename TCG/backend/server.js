@@ -7,6 +7,7 @@ const provider = 'http://localhost:8545';
 const web3 = new Web3(provider);
 var bodyParser = require('body-parser')
 var deployedContract = null;
+var owner = null;
 
 async function deployContract () {
   const contract = new web3.eth.Contract(constractJson.abi);
@@ -14,13 +15,14 @@ async function deployContract () {
     try {
       const accounts = await web3.eth.getAccounts();
       console.log('Ethereum node accounts ready');
+      owner = accounts[0].toLowerCase();
       deployedContract = await contract
         .deploy({
           data: constractJson.bytecode,
           arguments: [],
         })
         .send({
-          from: accounts[0], // Use the sender's address
+          from: owner, // Use the sender's address
           gas: '3000000', // Adjust the gas limit as needed
         });
       console.log('Contract deployed at:', deployedContract.options.address);
@@ -38,7 +40,7 @@ async function launchServer () {
 
     const corsOptions = {
       origin: function (origin, callback) {
-        if (allowedOrigins.indexOf(origin) !== -1) {
+        if (allowedOrigins.indexOf(origin)!==-1) {
           callback(null, true);
         } else {
           callback(new Error('Not allowed by CORS'));
@@ -50,8 +52,8 @@ async function launchServer () {
     app.use( bodyParser.json() ); 
 
     const pokemonsets = await pokemonapi.getSets(3);
-
-    app.post('/',(req,res) => {
+    
+    app.post('/',(req,res) => { //Root router, send contract info
       web3.eth.net.getId()
       .then(chainId => {
         data ={"contract": deployedContract.options.address, 
@@ -69,30 +71,36 @@ async function launchServer () {
         res.json(pokemonsets);
     });
 
+    app.post('/conn', (req, res) => { //A user is connected, check if he's an admin
+      console.log("router /conn"); //Get foreach set, all user and their possession
+      if (owner==req.body.user) res.json({userType: "Administrator"})
+      else res.json({userType: "Normal"})
+    });
+
     app.post('/all', (req, res) => {
       console.log("router /all"); //Get foreach set, all user and their possession
-      const postData = req.body;
-      console.log(postData);
+      const postData = req.body; //{user:...}
+      console.log('Data received',postData);
       //...
     });
 
     app.post('/nft', (req, res) => {
       console.log("router /nft"); //Get infos of a NFT
-      const postData = req.body;
+      const postData = req.body; //{user:...,token:...};
       console.log('Data received',postData);
       //...
     });
 
     app.post('/user', (req, res) => {
       console.log("router /user"); //Get NFTs from user
-      const postData = req.body;
+      const postData = req.body; //{user:...,targetUser:...};
       console.log('Data received',postData);
       //...
     });
 
     app.post('/mint', (req, res) => {
       console.log("router /mint"); //Mint nft for user (only admin)
-      const postData = req.body;
+      const postData = req.body; //{user:...,targetUser:...,token:...};
       console.log('Data received',postData);
       //...
     });

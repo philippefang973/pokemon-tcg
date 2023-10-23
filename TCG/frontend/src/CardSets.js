@@ -2,18 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Card from './Card';
 import axios from 'axios';
 
-const CardSets = () => {
-  const [sets, retrieveSets] = useState([]);
-
-  useEffect(() => {
-    // Fetch pokemon sets data from the server
-    const url = 'http://localhost:5000/sets';
-    const req = {};
-    axios.post(url,req)
-      .then(response => retrieveSets(response.data))
-      .catch(error => console.error(error));
-  }, []);
-
+const CardSets = ({ sets, userType, userList, handler }) => {
   //Rendering
   return (
     <div>
@@ -22,7 +11,7 @@ const CardSets = () => {
           <h2>Cards Set : {setName}</h2>
           <div className="card-list">
             {cards.map(card => (
-              <Card card={card} />
+              <Card card={card} userType={userType} userList={userList} handler={handler}/>
             ))}
           </div>
         </div>
