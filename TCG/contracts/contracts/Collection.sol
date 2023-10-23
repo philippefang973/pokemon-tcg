@@ -4,14 +4,20 @@ pragma solidity ^0.8.9;
 contract Collection {
     string public name;
     int public cardCount;
-    mapping(int => string) public cards;
+    mapping(string => string) public cards;
 
     constructor(string memory _name, int _cardCount) {
         name = _name;
         cardCount = _cardCount;
     }
 
-    function setCard(int spot, string memory cardURI) public {
-        cards[spot] = cardURI;
+    function setCard(string memory cardName, string memory cardURI) public {
+        cards[cardName] = cardURI;
+    }
+
+    function getCardInfo(
+        string memory cardName
+    ) public view returns (string memory) {
+        return cards[cardName];
     }
 }
