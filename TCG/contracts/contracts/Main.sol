@@ -7,7 +7,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract Main is Ownable {
     int private count;
-    mapping(int => Collection) private collections;
+    mapping(string => Collection) private collections;
     Card private cardFactory;
 
     constructor() {
@@ -19,15 +19,23 @@ contract Main is Ownable {
         string calldata name,
         int cardCount
     ) external onlyOwner {
-        collections[count++] = new Collection(name, cardCount);
+        collections[name] = new Collection(name, cardCount);
+    }
+
+    function createCard(
+        string calldata collectionName,
+        string calldata cardName,
+        string calldata cardURI
+    ) external onlyOwner {
+        collections[collectionName].setCard(cardName, cardURI);
     }
 
     function assign(
-        int collectionId,
-        string memory cardName,
+        string calldata collectionName,
+        string calldata cardName,
         address user
     ) external onlyOwner {
-        string memory cardMetadata = collections[collectionId].getCardInfo(
+        string memory cardMetadata = collections[collectionName].getCardInfo(
             cardName
         );
         cardFactory.assignCard(user, cardMetadata);
