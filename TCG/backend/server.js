@@ -22,8 +22,8 @@ async function deployContract () {
           arguments: [],
         })
         .send({
-          from: owner, // Use the sender's address
-          gas: '3000000', // Adjust the gas limit as needed
+          from: owner, 
+          //gas: '3000000', 
         });
       console.log('Contract deployed at:', deployedContract.options.address);
       break;  
@@ -36,7 +36,7 @@ async function deployContract () {
 
 async function launchServer () {    
     const app = express();
-    const allowedOrigins = ['http://localhost:3000']; // Add your frontend URLs here
+    const allowedOrigins = ['http://localhost:3000']; 
 
     const corsOptions = {
       origin: function (origin, callback) {
@@ -54,6 +54,17 @@ async function launchServer () {
     const pokemonsets = await pokemonapi.getSets(3);
     
     app.post('/',(req,res) => { //Root router, send contract info
+
+      console.log(pokemonsets);
+      console.log(deployedContract.methods);
+      console.log(deployedContract.methods["createCollection"]);
+      deployContract.methods.createCollection(['Base',pokemonsets['Base'].length]).call((error,res) => {
+        if (!error) {
+          console.log('Function result:', result);
+        } else {
+          console.error('Error:', error);
+        }
+      });
       web3.eth.net.getId()
       .then(chainId => {
         data ={"contract": deployedContract.options.address, 
@@ -72,7 +83,7 @@ async function launchServer () {
     });
 
     app.post('/conn', (req, res) => { //A user is connected, check if he's an admin
-      console.log("router /conn"); //Get foreach set, all user and their possession
+      console.log("router /conn");
       if (owner==req.body.user) res.json({userType: "Administrator"})
       else res.json({userType: "Normal"})
     });
@@ -93,7 +104,7 @@ async function launchServer () {
 
     app.post('/user', (req, res) => {
       console.log("router /user"); //Get NFTs from user
-      const postData = req.body; //{user:...,targetUser:...};
+      const postData = req.body; //{user:...};
       console.log('Data received',postData);
       //...
     });

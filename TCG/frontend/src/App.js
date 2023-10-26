@@ -9,6 +9,7 @@ export const App = () => {
   const [data,retrieveData] = useState(null); //Var to store response data
   const [user,setUser] = useState(null); //Var to store user
   const [userType,setUserType] = useState(null); //Var to store user type
+  const [inputText, setInputText] = useState('');
 
   //Auto launch in startup
   useEffect(() => {
@@ -35,6 +36,14 @@ export const App = () => {
       .catch(error => console.error(error));    
   }
 
+  const getUserNFT = async (u) => {
+    const url = 'http://localhost:5000/user';
+    const req = {user:u};
+    axios.post(url,req)
+      .then(response => retrieveData(response.data))
+      .catch(error => console.error(error));
+  };
+
   //Metamask Connection function
   const connect = async () => {
     try {
@@ -43,7 +52,11 @@ export const App = () => {
         const accounts = await window.ethereum.request({method: "eth_requestAccounts" });
         console.log(accounts);
         if (accounts.length>0) 
-          setUser(() => {getUserType(accounts[0]); return accounts[0];});
+          setUser(() => {
+            getUserType(accounts[0]); 
+            getUserNFT(accounts[0]);
+            return accounts[0];
+          });
       } else {
         const accounts = await window.ethereum.request({method: "eth_requestAccounts" })
         .then(() => {
@@ -63,7 +76,12 @@ export const App = () => {
           })
         });
         const selectedAcc = window.prompt('Choose an account', accounts);
-        if (accounts.length>0) setUser(() => {getUserType(accounts[0]); return accounts[0];});
+        if (accounts.length>0) 
+          setUser(() => {
+            getUserType(accounts[0]); 
+            getUserNFT(accounts[0]);
+            return accounts[0];
+          });
       }
     } catch(err) {
       console.warn(`failed to connect..`);
@@ -74,14 +92,6 @@ export const App = () => {
   const getNFT = (event) => {
     const url = 'http://localhost:5000/nft';
     const req = {user:user,token:event.target.value};
-    axios.post(url,req)
-      .then(response => retrieveData(response.data))
-      .catch(error => console.error(error));
-  };
-
-  const getUser = (event) => {
-    const url = 'http://localhost:5000/user';
-    const req = {user:user,targetUser:event.target.value};
     axios.post(url,req)
       .then(response => retrieveData(response.data))
       .catch(error => console.error(error));
@@ -149,10 +159,6 @@ export const App = () => {
           <button style={{padding: "20px"}} onClick={getAll}>
           <b>Show all collections</b>
           </button>
-          <select style={{padding: "20px", fontWeight:'bold'}} onChange={getUser}>
-            <option value={user} selected>My collection</option>
-            <option value="Test">Test</option>
-          </select>
           <select style={{padding: "20px", fontWeight:'bold'}} onChange={getNFT}>
             <option disbaled hidden>Show NFT</option>
             {Object.entries(sets).map(([setName, cards]) => (

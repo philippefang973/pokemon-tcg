@@ -21,7 +21,7 @@ module.exports = {
 
         async function getPokemonCardsFromSet(set_id) {
             try {
-                const res = await fetch(url_cards+"?q=set.id:"+set_id+"&select=name,images", {
+                const res = await fetch(url_cards+"?q=set.id:"+set_id+"&select=name,images,id", {
                     method: 'GET', 
                     headers: head 
                 });
