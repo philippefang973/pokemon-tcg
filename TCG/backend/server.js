@@ -54,11 +54,8 @@ async function launchServer() {
   const pokemonsets = await pokemonapi.getSets(3);
 
   app.post('/', (req, res) => { //Root router, send contract info
-
-    console.log(pokemonsets);
-    console.log(deployedContract.methods);
-    console.log(deployedContract.methods["createCollection"]);
-    deployedContract.methods.createCollection('Base', 250).send({ from: owner });
+ 
+    deployedContract.methods.createCollection('Base', pokemonsets['Base'].length).send({ from: owner });
     web3.eth.net.getId()
       .then(chainId => {
         data = {
