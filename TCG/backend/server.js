@@ -8,6 +8,7 @@ const web3 = new Web3(provider);
 var bodyParser = require('body-parser');
 var deployedContract = null;
 var owner = null;
+var owner2 = null;
 
 async function deployContract() {
   const contract = new web3.eth.Contract(constractJson.abi);
@@ -16,6 +17,7 @@ async function deployContract() {
       const accounts = await web3.eth.getAccounts();
       console.log('Ethereum node accounts ready');
       owner = accounts[0].toLowerCase();
+      owner2 = accounts[1].toLowerCase();
       deployedContract = await contract
         .deploy({
           data: constractJson.bytecode,
@@ -54,8 +56,77 @@ async function launchServer() {
   const pokemonsets = await pokemonapi.getSets(3);
 
   app.post('/', (req, res) => { //Root router, send contract info
- 
-    deployedContract.methods.createCollection('Base', pokemonsets['Base'].length).send({ from: owner });
+    
+    console.log(owner);
+    console.log(owner2);
+    //Create Collection
+    deployedContract.methods.createCollection('Base', pokemonsets['Base'].length).send({ from: owner })
+    .on('transactionHash', function(hash) {
+      console.log('Transaction Hash:', hash);
+    })
+    .on('receipt', function(receipt) {
+      if (receipt.status === true) {
+        console.log('Transaction succeeded');
+      } else {
+        console.log('Transaction failed');
+        console.log('Revert Reason:', receipt.statusMessage);
+      }
+    })
+    .on('error', function(error) {
+      console.error('Error:', error);
+    });
+
+    //CreateCard
+    deployedContract.methods.createCard('Base', pokemonsets['Base'][0].name,pokemonsets['Base'][0].id).send({ from: owner })
+    .on('transactionHash', function(hash) {
+      console.log('Transaction Hash:', hash);
+    })
+    .on('receipt', function(receipt) {
+      if (receipt.status === true) {
+        console.log('Transaction succeeded');
+      } else {
+        console.log('Transaction failed');
+        console.log('Revert Reason:', receipt.statusMessage);
+      }
+    })
+    .on('error', function(error) {
+      console.error('Error:', error);
+    });
+
+    //Mint
+    deployedContract.methods.assign('Base', pokemonsets['Base'][0].name,owner2).send({ from: owner })
+    .on('transactionHash', function(hash) {
+      console.log('Transaction Hash:', hash);
+    })
+    .on('receipt', function(receipt) {
+      if (receipt.status === true) {
+        console.log('Transaction succeeded');
+      } else {
+        console.log('Transaction failed');
+        console.log('Revert Reason:', receipt.statusMessage);
+    
+      }
+    })
+    .on('error', function(error) {
+      console.error('Error:', error);
+    });
+
+    deployedContract.methods.balanceOf(owner2).call((error, balance) => {
+      if (!error) {
+        console.log(`User ${owner2} owns ${balance} NFTs.`);
+      } else {
+        console.error('Error:', error);
+      }
+    });
+    deployedContract.methods.balanceOf(owner).call((error, balance) => {
+      if (!error) {
+        console.log(`User ${owner} owns ${balance} NFTs.`);
+      } else {
+        console.error('Error:', error);
+      }
+    });
+
+    //Render
     web3.eth.net.getId()
       .then(chainId => {
         data = {
