@@ -13,10 +13,7 @@ contract Main is Ownable {
         cardFactory = new Card();
     }
 
-    function createCollection(
-        string memory name,
-        int cardCount
-    ) public onlyOwner {
+    function createCollection(string memory name, int cardCount) public {
         collections[name] = new Collection(name, cardCount);
     }
 
