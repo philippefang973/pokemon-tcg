@@ -4,6 +4,7 @@ pragma solidity ^0.8.9;
 import "./Collection.sol";
 import "./Card.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "hardhat/console.sol";
 
 contract Main is Ownable {
     mapping(string => Collection) private collections;
@@ -12,10 +13,15 @@ contract Main is Ownable {
     constructor() {
         cardFactory = new Card();
     }
-    
-    function createCollection(string memory name, int cardCount) public {
+
+    function createCollection(
+        string memory name,
+        int cardCount
+    ) public returns (string memory) {
         collections[name] = new Collection(name, cardCount);
         emit collectionCreated(collections[name]);
+        console.log(name);
+        return name;
     }
 
     event collectionCreated(Collection c);
@@ -26,6 +32,7 @@ contract Main is Ownable {
         string memory cardURI
     ) external onlyOwner {
         collections[collectionName].setCard(cardName, cardURI);
+        console.log(collections[collectionName].getCardInfo(cardName));
     }
 
     function assign(

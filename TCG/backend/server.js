@@ -69,7 +69,7 @@ async function launchServer() {
   app.use(bodyParser.json());
 
   const pokemonsets = await pokemonapi.getSets(3);
-  
+
   console.log(owner);
   console.log(owner2);
 
@@ -79,11 +79,21 @@ async function launchServer() {
     data: await deployedContract.methods.createCollection('Base', pokemonsets['Base'].length).encodeABI()
   };
   const result = await web3.eth.sendTransaction(tx)
-  .then(function(receipt) {
-    console.log(receipt);
-  });
+    .then(function (receipt) {
+      console.log(receipt);
+    });
   console.log(result);
-  
+
+  let tx2 = {
+    from: owner,
+    to: deployedContract.options.address,
+    data: await deployedContract.methods.createCard('Base', pokemonsets['Base'][0].name, pokemonsets['Base'][0].id).encodeABI()
+  };
+  const result2 = await web3.eth.sendTransaction(tx2)
+    .then(function (receipt) {
+      console.log(receipt);
+    });
+  console.log(result2);
   /*
   //Create Collection
   await deployedContract.methods.createCollection('Base', pokemonsets['Base'].length).send({ from: owner })
@@ -174,12 +184,12 @@ async function launchServer() {
     //...
   });
 
-  app.post('/booster',(req,res) => {
+  app.post('/booster', (req, res) => {
     console.log("router /booster"); //Get Booster
     const postData = req.body; //{user:...};
     console.log('Data received', postData);
     res.json(getBooster(pokemonsets));
-  }); 
+  });
 
   const PORT = process.env.PORT || 5000;
   app.listen(PORT, () => {
