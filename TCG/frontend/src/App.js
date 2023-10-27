@@ -96,6 +96,14 @@ export const App = () => {
       .catch(error => console.error(error));
   };
 
+  const getBooster = (event) => {
+    const url = 'http://localhost:5000/booster';
+    const req = {user:user,token:event.target.value};
+    axios.post(url,req)
+      .then(response => retrieveSets(response.data))
+      .catch(error => console.error(error));
+  };
+
   const getAll = async () => {
     const url = 'http://localhost:5000/all';
     const req = {user:user};
@@ -167,8 +175,12 @@ export const App = () => {
           <select style={{padding: "20px", fontWeight:'bold'}} onChange={getNFT}>
             <option disbaled hidden>Show NFT</option>
           </select>
+            {(userType!=='Administrator') && (
+              <button style={{padding: "20px"}} onClick={getBooster}>
+              <b>Redeem a booster</b>
+              </button>  
+            )}
           </div>
-
             {sets && (
             <CardSets sets={sets} userType={userType} handlerInputText={handlerInputText} handlerSubmit={handlerSubmit} inputText={inputText}/>
             )}

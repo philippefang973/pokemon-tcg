@@ -11,9 +11,9 @@ var owner = null;
 var owner2 = null;
 
 async function deployContract() {
-  const contract = new web3.eth.Contract(constractJson.abi);
   while (true) {
     try {
+      const contract = new web3.eth.Contract(constractJson.abi);
       const accounts = await web3.eth.getAccounts();
       console.log('Ethereum node accounts ready');
       owner = accounts[0].toLowerCase();
@@ -28,6 +28,7 @@ async function deployContract() {
           //gas: '3000000', 
         });
       console.log('Contract deployed at:', deployedContract.options.address);
+      console.log(deployedContract.methods);
       break;
     } catch (error) {
       console.log("Waiting for Ethereum node accounts...");
@@ -38,13 +39,14 @@ async function deployContract() {
 };
 
 function getBooster(sets) {
-  var res = [];
+  var res = {};
   for (let i = 0; i < 5; i++) {
     const keys = Object.keys(sets);
     const randomName = keys[Math.floor(Math.random() * keys.length)];
     const selectedSet = sets[randomName];
     const randomCard = selectedSet[Math.floor(Math.random() * selectedSet.length)];
-    res.push(randomCard);
+    if (randomName in res) res[randomName].push(randomCard);
+    else res[randomName] = [randomCard];
   }
   return res;
 }
@@ -70,6 +72,19 @@ async function launchServer() {
   
   console.log(owner);
   console.log(owner2);
+
+  let tx = {
+    from: owner,
+    to: deployedContract.options.address,
+    data: await deployedContract.methods.createCollection('Base', pokemonsets['Base'].length).encodeABI()
+  };
+  const result = await web3.eth.sendTransaction(tx)
+  .then(function(receipt) {
+    console.log(receipt);
+  });
+  console.log(result);
+  
+  /*
   //Create Collection
   await deployedContract.methods.createCollection('Base', pokemonsets['Base'].length).send({ from: owner })
   .on('transactionHash', function(hash) {
@@ -82,7 +97,6 @@ async function launchServer() {
   .on('error', function(error) {
     console.error('Error:', error);
   });
-
   //CreateCard
   await deployedContract.methods.createCard('Base', pokemonsets['Base'][0].name,pokemonsets['Base'][0].id).send({ from: owner })
   .on('transactionHash', function(hash) {
@@ -123,7 +137,7 @@ async function launchServer() {
       .catch(error => {
         res.status(500).json({ error: 'Error getting chain ID' });
       });
-  });
+  });*/
 
   app.post('/conn', (req, res) => { //A user is connected, check if he's an admin
     console.log("router /conn");
@@ -161,7 +175,7 @@ async function launchServer() {
   });
 
   app.post('/booster',(req,res) => {
-    console.log("router /booster"); //Get NFTs from user
+    console.log("router /booster"); //Get Booster
     const postData = req.body; //{user:...};
     console.log('Data received', postData);
     res.json(getBooster(pokemonsets));

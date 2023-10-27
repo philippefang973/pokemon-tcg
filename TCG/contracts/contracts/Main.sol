@@ -12,25 +12,13 @@ contract Main is Ownable {
     constructor() {
         cardFactory = new Card();
     }
-
-    receive() external payable {
-        // This function is called when Ether is sent to the contract
-        // It can be used to receive and process the incoming Ether
-        // In this example, we'll simply log the sender and the amount received.
-        address sender = msg.sender;
-        uint256 amount = msg.value;
-
-        emit Received(sender, amount);
-
-        // You can add your custom logic here to handle the received Ether.
-    }
-
-    // Event to log received Ether
-    event Received(address indexed sender, uint256 amount);
     
     function createCollection(string memory name, int cardCount) public {
         collections[name] = new Collection(name, cardCount);
+        emit collectionCreated(collections[name]);
     }
+
+    event collectionCreated(Collection c);
 
     function createCard(
         string memory collectionName,
