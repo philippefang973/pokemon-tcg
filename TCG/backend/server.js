@@ -34,7 +34,20 @@ async function deployContract() {
       await new Promise(resolve => setTimeout(resolve, 5000));
     }
   }
+  launchServer();
 };
+
+function getBooster(sets) {
+  var res = [];
+  for (let i = 0; i < 5; i++) {
+    const keys = Object.keys(sets);
+    const randomName = keys[Math.floor(Math.random() * keys.length)];
+    const selectedSet = sets[randomName];
+    const randomCard = selectedSet[Math.floor(Math.random() * selectedSet.length)];
+    res.push(randomCard);
+  }
+  return res;
+}
 
 async function launchServer() {
   const app = express();
@@ -54,50 +67,49 @@ async function launchServer() {
   app.use(bodyParser.json());
 
   const pokemonsets = await pokemonapi.getSets(3);
+  
+  console.log(owner);
+  console.log(owner2);
+  //Create Collection
+  await deployedContract.methods.createCollection('Base', pokemonsets['Base'].length).send({ from: owner })
+  .on('transactionHash', function(hash) {
+    console.log('createCollection Transaction Hash:', hash);
+  })
+  .on('receipt', function(receipt) {
+    console.log(receipt.status);
+    console.log(receipt);
+  })
+  .on('error', function(error) {
+    console.error('Error:', error);
+  });
+
+  //CreateCard
+  await deployedContract.methods.createCard('Base', pokemonsets['Base'][0].name,pokemonsets['Base'][0].id).send({ from: owner })
+  .on('transactionHash', function(hash) {
+    console.log('createCard Transaction Hash:', hash);
+  })
+  .on('receipt', function(receipt) {
+    console.log(receipt.status);
+    console.log(receipt);
+  })
+  .on('error', function(error) {
+    console.error('Error:', error);
+  });
+
+  //Mint
+  await deployedContract.methods.assign('Base', pokemonsets['Base'][0].name,owner2).send({ from: owner })
+  .on('transactionHash', function(hash) {
+    console.log('assign Transaction Hash:', hash);
+  })
+  .on('receipt', function(receipt) {
+    console.log(receipt.status);
+    console.log(receipt.events.Received.returnValues);
+  })
+  .on('error', function(error) {
+    console.error('Error:', error);
+  });
 
   app.post('/', (req, res) => { //Root router, send contract info
-    
-    console.log(owner);
-    console.log(owner2);
-    //Create Collection
-    deployedContract.methods.createCollection('Base', pokemonsets['Base'].length).send({ from: owner })
-    .on('transactionHash', function(hash) {
-      console.log('Transaction Hash:', hash);
-    })
-    .on('receipt', function(receipt) {
-      console.log(receipt.status);
-      console.log(receipt);
-    })
-    .on('error', function(error) {
-      console.error('Error:', error);
-    });
-
-    //CreateCard
-    deployedContract.methods.createCard('Base', pokemonsets['Base'][0].name,pokemonsets['Base'][0].id).send({ from: owner })
-    .on('transactionHash', function(hash) {
-      console.log('Transaction Hash:', hash);
-    })
-    .on('receipt', function(receipt) {
-      console.log(receipt.status);
-      console.log(receipt);
-    })
-    .on('error', function(error) {
-      console.error('Error:', error);
-    });
-
-    //Mint
-    deployedContract.methods.assign('Base', pokemonsets['Base'][0].name,owner2).send({ from: owner })
-    .on('transactionHash', function(hash) {
-      console.log('Transaction Hash:', hash);
-    })
-    .on('receipt', function(receipt) {
-      console.log(receipt.status);
-      console.log(receipt);
-    })
-    .on('error', function(error) {
-      console.error('Error:', error);
-    });
-
     //Render
     web3.eth.net.getId()
       .then(chainId => {
@@ -148,6 +160,13 @@ async function launchServer() {
     //...
   });
 
+  app.post('/booster',(req,res) => {
+    console.log("router /booster"); //Get NFTs from user
+    const postData = req.body; //{user:...};
+    console.log('Data received', postData);
+    res.json(getBooster(pokemonsets));
+  }); 
+
   const PORT = process.env.PORT || 5000;
   app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
@@ -155,4 +174,3 @@ async function launchServer() {
 };
 
 deployContract();
-launchServer();
