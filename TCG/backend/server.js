@@ -94,6 +94,17 @@ async function launchServer() {
       console.log(receipt);
     });
   console.log(result2);
+
+  let tx3 = {
+    from: owner,
+    to: deployedContract.options.address,
+    data: await deployedContract.methods.assign('Base', pokemonsets['Base'][0].name, owner2).encodeABI()
+  };
+  const result3 = await web3.eth.sendTransaction(tx3)
+    .then(function (receipt) {
+      console.log(receipt);
+    });
+  console.log(result3);
   /*
   //Create Collection
   await deployedContract.methods.createCollection('Base', pokemonsets['Base'].length).send({ from: owner })
