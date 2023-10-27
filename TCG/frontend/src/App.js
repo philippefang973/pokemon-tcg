@@ -4,25 +4,17 @@ import './App.css'
 import axios from 'axios';
 
 export const App = () => {
-  const [sets, retrieveSets] = useState([]);
+  const [sets, retrieveSets] = useState(null);
   const [net,retrieveNet] = useState(null);  //Var to store network, contract
-  const [data,retrieveData] = useState(null); //Var to store response data
   const [user,setUser] = useState(null); //Var to store user
   const [userType,setUserType] = useState(null); //Var to store user type
-  const [inputText, setInputText] = useState('');
+  const [inputText, setInputText] = useState(null);
 
   //Auto launch in startup
-  useEffect(() => {
-    // Fetch pokemon sets data from the server
-    var url = 'http://localhost:5000/sets';
-    var req = {};
-    axios.post(url,req)
-      .then(response => retrieveSets(response.data))
-      .catch(error => console.error(error));
-
+  useEffect(() => { 
     // Fetch network infos from backend
-    url = 'http://localhost:5000/';
-    req = {};
+    const url = 'http://localhost:5000/';
+    const req = {};
     axios.post(url,req)
     .then(response => retrieveNet(response.data))
     .catch(error => console.error(error));
@@ -40,7 +32,14 @@ export const App = () => {
     const url = 'http://localhost:5000/user';
     const req = {user:u};
     axios.post(url,req)
-      .then(response => retrieveData(response.data))
+      .then(response => {
+        var d = {}
+        Object.entries(response.data).map(([setName, cards]) => {
+              cards.map(card => { d[card.name]="";});
+        });
+        setInputText(d);
+        retrieveSets(response.data);
+      })
       .catch(error => console.error(error));
   };
 
@@ -93,7 +92,7 @@ export const App = () => {
     const url = 'http://localhost:5000/nft';
     const req = {user:user,token:event.target.value};
     axios.post(url,req)
-      .then(response => retrieveData(response.data))
+      .then(response => retrieveSets(response.data))
       .catch(error => console.error(error));
   };
 
@@ -101,17 +100,23 @@ export const App = () => {
     const url = 'http://localhost:5000/all';
     const req = {user:user};
     axios.post(url,req)
-      .then(response => retrieveData(response.data))
+      .then(response => retrieveSets(response.data))
       .catch(error => console.error(error));
   };
 
-  const mint = (event) => {
+  const handlerInputText = (id,val) => {
+    setInputText({...inputText, [id]:val});
+  };
+
+  const handlerSubmit = (id) => {
     const url = 'http://localhost:5000/mint';
-    const [targetUser,token] = event.target.value.split(";")
-    const req = {user:user,targetUser:targetUser,token:token};
+    const req = {user:user,targetUser:inputText[id],token:id};
     axios.post(url,req)
-      .then(response => retrieveData(response.data))
+      .then(response => console.log(response.data))
       .catch(error => console.error(error));
+    var d = {};
+    for (const k in inputText) d[k] = "";
+    setInputText(d);
   };
 
   //Rendering
@@ -150,29 +155,26 @@ export const App = () => {
               <u><b>Welcome back Metamask User!</b></u><br/>
               <small><b>[Account type] </b><em>{userType}</em></small><br/>
               <small><b>[Connected address] </b><em>{user}</em></small>
-              {data && (
-                <p>{data}</p>
-              )}
           </div>
           <p></p>
           <div>
+          <button style={{padding: "20px"}} onClick={() => getUserNFT(user)}>
+          <b>My collection</b>
+          </button>
           <button style={{padding: "20px"}} onClick={getAll}>
           <b>Show all collections</b>
           </button>
           <select style={{padding: "20px", fontWeight:'bold'}} onChange={getNFT}>
             <option disbaled hidden>Show NFT</option>
-            {Object.entries(sets).map(([setName, cards]) => (
-              <>
-              {cards.map(card => (
-                <option value={card.name}>{card.name}</option>
-                ))}
-              </>
-            ))}
           </select>
           </div>
 
             {sets && (
-            <CardSets sets={sets} userType={userType} userList={[]} handler={mint}/>
+            <CardSets sets={sets} userType={userType} handlerInputText={handlerInputText} handlerSubmit={handlerSubmit} inputText={inputText}/>
+            )}
+
+            {!sets && (
+              <p style={{color:"grey"}}>No NFTs to show</p>
             )}
           </div>
         )}

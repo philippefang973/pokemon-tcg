@@ -65,12 +65,8 @@ async function launchServer() {
       console.log('Transaction Hash:', hash);
     })
     .on('receipt', function(receipt) {
-      if (receipt.status === true) {
-        console.log('Transaction succeeded');
-      } else {
-        console.log('Transaction failed');
-        console.log('Revert Reason:', receipt.statusMessage);
-      }
+      console.log(receipt.status);
+      console.log(receipt);
     })
     .on('error', function(error) {
       console.error('Error:', error);
@@ -82,12 +78,8 @@ async function launchServer() {
       console.log('Transaction Hash:', hash);
     })
     .on('receipt', function(receipt) {
-      if (receipt.status === true) {
-        console.log('Transaction succeeded');
-      } else {
-        console.log('Transaction failed');
-        console.log('Revert Reason:', receipt.statusMessage);
-      }
+      console.log(receipt.status);
+      console.log(receipt);
     })
     .on('error', function(error) {
       console.error('Error:', error);
@@ -99,31 +91,11 @@ async function launchServer() {
       console.log('Transaction Hash:', hash);
     })
     .on('receipt', function(receipt) {
-      if (receipt.status === true) {
-        console.log('Transaction succeeded');
-      } else {
-        console.log('Transaction failed');
-        console.log('Revert Reason:', receipt.statusMessage);
-    
-      }
+      console.log(receipt.status);
+      console.log(receipt);
     })
     .on('error', function(error) {
       console.error('Error:', error);
-    });
-
-    deployedContract.methods.balanceOf(owner2).call((error, balance) => {
-      if (!error) {
-        console.log(`User ${owner2} owns ${balance} NFTs.`);
-      } else {
-        console.error('Error:', error);
-      }
-    });
-    deployedContract.methods.balanceOf(owner).call((error, balance) => {
-      if (!error) {
-        console.log(`User ${owner} owns ${balance} NFTs.`);
-      } else {
-        console.error('Error:', error);
-      }
     });
 
     //Render
@@ -139,11 +111,6 @@ async function launchServer() {
       .catch(error => {
         res.status(500).json({ error: 'Error getting chain ID' });
       });
-  });
-
-  app.post('/sets', (req, res) => { //Temporary router to showcase PokemonAPI results
-    console.log("router /set")
-    res.json(pokemonsets);
   });
 
   app.post('/conn', (req, res) => { //A user is connected, check if he's an admin
@@ -170,7 +137,8 @@ async function launchServer() {
     console.log("router /user"); //Get NFTs from user
     const postData = req.body; //{user:...};
     console.log('Data received', postData);
-    //...
+    if (owner == req.body.user) res.json(pokemonsets)
+    else res.json(null)
   });
 
   app.post('/mint', (req, res) => {
