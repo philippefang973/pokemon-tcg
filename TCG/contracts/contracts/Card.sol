@@ -2,6 +2,7 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
+import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "hardhat/console.sol";
 
@@ -13,13 +14,13 @@ contract Card is ERC721URIStorage {
 
     function assignCard(
         address user,
-        string memory tokenURI
+        string memory uri
     ) public returns (uint256) {
         uint256 newCardId = _tokenIds.current();
         _mint(user, newCardId);
-        _setTokenURI(newCardId, tokenURI);
+        _setTokenURI(newCardId, uri);
         _tokenIds.increment();
-        console.log(ownerOf(newCardId));
         return newCardId;
     }
+
 }

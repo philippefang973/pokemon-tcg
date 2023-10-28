@@ -2,17 +2,18 @@ const express = require('express');
 const cors = require('cors');
 const pokemonapi = require('./pokemon.js');
 const { Web3 } = require('web3');
-const constractJson = require('../contracts/artifacts/contracts/Main.sol/Main.json');
 const provider = 'http://localhost:8545';
 const web3 = new Web3(provider);
 var bodyParser = require('body-parser');
 var deployedContract = null;
+var cardContractAddress = null;
 var owner = null;
 var owner2 = null;
 
 async function deployContract() {
   while (true) {
     try {
+      const constractJson = require('../contracts/artifacts/contracts/Main.sol/Main.json');
       const contract = new web3.eth.Contract(constractJson.abi);
       const accounts = await web3.eth.getAccounts();
       console.log('Ethereum node accounts ready');
@@ -24,8 +25,10 @@ async function deployContract() {
           arguments: [],
         })
         .send({
-          from: owner,
-          //gas: '3000000', 
+          from: owner
+        })
+        .on('receipt', function(receipt) {
+          cardContractAddress = receipt.events.getCardContractAddress.returnValues.res;
         });
       console.log('Contract deployed at:', deployedContract.options.address);
       console.log(deployedContract.methods);
@@ -51,6 +54,13 @@ function getBooster(sets) {
   return res;
 }
 
+function uriToJSON(uri) {
+  fetch(uri).then (response => {
+    if (response.ok) return response.json();
+    else throw Error("can't get URI content");
+  })
+}
+
 async function launchServer() {
   const app = express();
   const allowedOrigins = ['http://localhost:3000'];
@@ -70,79 +80,35 @@ async function launchServer() {
 
   const pokemonsets = await pokemonapi.getSets(3);
 
-  console.log(owner);
-  console.log(owner2);
+  for (const name of Object.keys(pokemonsets)) {
+    const cardNames = pokemonsets[name].map(item => item.name);
+    const cardURIs = pokemonsets[name].map(item => item.uri);
+    const m1 = await deployedContract.methods.createCollection(name, pokemonsets[name].length).encodeABI();
+    const m2 = await deployedContract.methods.createMultipleCards(name, cardNames, cardURIs).encodeABI();
+    const m3 = await deployedContract.methods.assignMultiple(name, cardNames, owner).encodeABI();
+    let tx = {
+      from: owner,
+      to: deployedContract.options.address,
+      data: m1,
+    };
+    let tx2 = {
+      from: owner,
+      to: deployedContract.options.address,
+      data: m2,
+    };
+    let tx3 = {
+      from: owner,
+      to: deployedContract.options.address,
+      data: m3,
+    };
+    console.log("Creating collection "+name);
+    await web3.eth.sendTransaction(tx);
+    console.log("Adding cards for collection "+name);
+    await web3.eth.sendTransaction(tx2);
+    console.log("Mint to owner collection "+name);
+    await web3.eth.sendTransaction(tx3);
+  }
 
-  let tx = {
-    from: owner,
-    to: deployedContract.options.address,
-    data: await deployedContract.methods.createCollection('Base', pokemonsets['Base'].length).encodeABI()
-  };
-  const result = await web3.eth.sendTransaction(tx)
-    .then(function (receipt) {
-      console.log(receipt);
-    });
-  console.log(result);
-
-  let tx2 = {
-    from: owner,
-    to: deployedContract.options.address,
-    data: await deployedContract.methods.createCard('Base', pokemonsets['Base'][0].name, pokemonsets['Base'][0].id).encodeABI()
-  };
-  const result2 = await web3.eth.sendTransaction(tx2)
-    .then(function (receipt) {
-      console.log(receipt);
-    });
-  console.log(result2);
-
-  let tx3 = {
-    from: owner,
-    to: deployedContract.options.address,
-    data: await deployedContract.methods.assign('Base', pokemonsets['Base'][0].name, owner2).encodeABI()
-  };
-  const result3 = await web3.eth.sendTransaction(tx3)
-    .then(function (receipt) {
-      console.log(receipt);
-    });
-  console.log(result3);
-  /*
-  //Create Collection
-  await deployedContract.methods.createCollection('Base', pokemonsets['Base'].length).send({ from: owner })
-  .on('transactionHash', function(hash) {
-    console.log('createCollection Transaction Hash:', hash);
-  })
-  .on('receipt', function(receipt) {
-    console.log(receipt.status);
-    console.log(receipt);
-  })
-  .on('error', function(error) {
-    console.error('Error:', error);
-  });
-  //CreateCard
-  await deployedContract.methods.createCard('Base', pokemonsets['Base'][0].name,pokemonsets['Base'][0].id).send({ from: owner })
-  .on('transactionHash', function(hash) {
-    console.log('createCard Transaction Hash:', hash);
-  })
-  .on('receipt', function(receipt) {
-    console.log(receipt.status);
-    console.log(receipt);
-  })
-  .on('error', function(error) {
-    console.error('Error:', error);
-  });
-
-  //Mint
-  await deployedContract.methods.assign('Base', pokemonsets['Base'][0].name,owner2).send({ from: owner })
-  .on('transactionHash', function(hash) {
-    console.log('assign Transaction Hash:', hash);
-  })
-  .on('receipt', function(receipt) {
-    console.log(receipt.status);
-    console.log(receipt.events.Received.returnValues);
-  })
-  .on('error', function(error) {
-    console.error('Error:', error);
-  });
 
   app.post('/', (req, res) => { //Root router, send contract info
     //Render
@@ -158,7 +124,7 @@ async function launchServer() {
       .catch(error => {
         res.status(500).json({ error: 'Error getting chain ID' });
       });
-  });*/
+  });
 
   app.post('/conn', (req, res) => { //A user is connected, check if he's an admin
     console.log("router /conn");
@@ -180,19 +146,31 @@ async function launchServer() {
     //...
   });
 
-  app.post('/user', (req, res) => {
+  app.post('/user', async (req, res) => {
     console.log("router /user"); //Get NFTs from user
     const postData = req.body; //{user:...};
-    console.log('Data received', postData);
-    if (owner == req.body.user) res.json(pokemonsets)
-    else res.json(null)
+    const m1 = await deployedContract.methods.retrieveNFTs(req.body.user).encodeABI();
+    let tx = {
+      from: owner,
+      to: deployedContract.options.address,
+      data: m1,
+    };
+    await web3.eth.sendTransaction(tx).on('receipt', function(receipt) {
+      console.log(receipt.events);
+      console.log(receipt.events.getNFTs.returnValues.res);
+    });
   });
 
-  app.post('/mint', (req, res) => {
+  app.post('/mint', async (req, res) => {
     console.log("router /mint"); //Mint nft for user (only admin)
-    const postData = req.body; //{user:...,targetUser:...,token:...};
-    console.log('Data received', postData);
-    //...
+    const postData = req.body; //{user:...,set:...,name:...};
+    const m = await deployedContract.methods.assign(req.body.set, req.body.name, req.body.user).encodeABI();
+    let tx = {
+      from: req.body.owner,
+      to: deployedContract.options.address,
+      data: m,
+    };
+    await web3.eth.sendTransaction(tx);
   });
 
   app.post('/booster', (req, res) => {

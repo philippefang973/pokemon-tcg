@@ -84,6 +84,7 @@ export const App = () => {
       }
     } catch(err) {
       console.warn(`failed to connect..`);
+      console.log(err);
     }
   };
 
@@ -118,7 +119,8 @@ export const App = () => {
 
   const handlerSubmit = (id) => {
     const url = 'http://localhost:5000/mint';
-    const req = {user:user,targetUser:inputText[id],token:id};
+    const idArr = id.split(";");
+    const req = {user:inputText[id],set:idArr[1],token:idArr[0]};
     axios.post(url,req)
       .then(response => console.log(response.data))
       .catch(error => console.error(error));

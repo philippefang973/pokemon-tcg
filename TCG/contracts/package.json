@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "license": "MIT",
   "scripts": {
-    "start": "npx hardhat compile --force && npx hardhat node"
+    "start": "rm -rf artifacts/* && npx hardhat compile --force && npx hardhat node"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-chai-matchers": "^2.0.0",
