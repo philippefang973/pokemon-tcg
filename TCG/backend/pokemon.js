@@ -17,8 +17,8 @@ module.exports = {
                 return data['data'].slice(0,number_sets);
         }
 
-        async function getPokemonCardsFromSet(set_id,set_name) {
-                const req = url_cards+"?q=set.id:"+set_id+"&select=name,images";
+        async function getPokemonCardsFromSet(set) {
+                const req = url_cards+"?q=set.id:"+set["id"]+"&select=name,images";
                 const res = await fetch(req, {
                     method: 'GET', 
                     headers: head 
@@ -26,12 +26,13 @@ module.exports = {
                 if (!res.ok) throw new Error('Failed Pokemon API call');
                 const data = await res.json();
                 var new_list = [];
-                for (const card of data['data']) {
+                for (let card of data['data']) {
+                    card['set'] = set['name'];
                     const jsonStr = JSON.stringify(card);
                     const utf8Bytes = new TextEncoder().encode(jsonStr);
                     const utf8EncodedString = String.fromCharCode.apply(null, utf8Bytes);
                     const uri = `data:application/json;charset=utf-8,${encodeURIComponent(utf8EncodedString)}`;
-                    new_list.push({name:card.name,set:set_name,uri:uri});
+                    new_list.push({name:card.name,uri:uri});
                 }
                 return new_list;
         }
@@ -44,7 +45,7 @@ module.exports = {
             for (const set of sets) {
                 console.log("\nSet:"+set["name"]+" | Series:"+set["series"]); 
                 console.log("Total cards: "+set["total"]);
-                const cards = await getPokemonCardsFromSet(set["id"],set["name"]); 
+                const cards = await getPokemonCardsFromSet(set); 
                 res[set["name"]] = cards;   
             };
             console.log("PokemonAPI: End");

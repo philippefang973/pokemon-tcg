@@ -9,6 +9,7 @@ export const App = () => {
   const [user,setUser] = useState(null); //Var to store user
   const [userType,setUserType] = useState(null); //Var to store user type
   const [inputText, setInputText] = useState(null);
+  const [msg,setMsg] = useState("");
 
   //Auto launch in startup
   useEffect(() => { 
@@ -29,6 +30,7 @@ export const App = () => {
   }
 
   const getUserNFT = async (u) => {
+    setMsg("");
     const url = 'http://localhost:5000/user';
     const req = {user:u};
     axios.post(url,req)
@@ -90,6 +92,7 @@ export const App = () => {
 
   //Other button-trigger functions
   const getNFT = (event) => {
+    setMsg("");
     const url = 'http://localhost:5000/nft';
     const req = {user:user,token:event.target.value};
     axios.post(url,req)
@@ -97,11 +100,15 @@ export const App = () => {
       .catch(error => console.error(error));
   };
 
-  const getBooster = (event) => {
+  const getBooster = async () => {
+    setMsg("");
     const url = 'http://localhost:5000/booster';
-    const req = {user:user,token:event.target.value};
+    const req = {user:user};
     axios.post(url,req)
-      .then(response => retrieveSets(response.data))
+      .then(response => {
+        retrieveSets(response.data.booster);
+        setMsg(response.data.msg)
+      })
       .catch(error => console.error(error));
   };
 
@@ -120,9 +127,9 @@ export const App = () => {
   const handlerSubmit = (id) => {
     const url = 'http://localhost:5000/mint';
     const idArr = id.split(";");
-    const req = {user:inputText[id],set:idArr[1],token:idArr[0]};
+    const req = {user:inputText[id],set:idArr[1],name:idArr[0]};
     axios.post(url,req)
-      .then(response => console.log(response.data))
+      .then(response => setMsg(response.data))
       .catch(error => console.error(error));
     var d = {};
     for (const k in inputText) d[k] = "";
@@ -183,6 +190,7 @@ export const App = () => {
               </button>  
             )}
           </div>
+            {msg && (<p style={{color:"blue"}}>{msg}</p>)}
             {sets && (
             <CardSets sets={sets} userType={userType} handlerInputText={handlerInputText} handlerSubmit={handlerSubmit} inputText={inputText}/>
             )}

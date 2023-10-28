@@ -13,8 +13,6 @@ contract Main is Ownable {
     Card private cardFactory;
 
     event getCardContractAddress(address res);
-    event getNFTs(string res);
-    event getMetadata(string res);
 
     constructor() {
         cardFactory = new Card();
@@ -73,16 +71,13 @@ contract Main is Ownable {
         console.log(cardFactory.balanceOf(owner()));
     }
 
-    function retrieveNFTs(address user) public {
-        string memory res = "";
-        for (uint i = 0; i < tokenIds[user].length; i++) 
-            res = string(abi.encodePacked(res,",",cardFactory.tokenURI(tokenIds[user][i])));
-        emit getNFTs(res);
-    }
 
-    function retrieveNFTMetadata(uint256 id) public  {
-        string memory res = cardFactory.tokenURI(id);
-        emit getMetadata(res);
+    function ownBy(address user) public view onlyOwner returns (uint256[] memory) {
+        return tokenIds[user];
+    }
+    
+    function readCard(uint256 id) public view onlyOwner returns (string memory) {
+        return cardFactory.tokenURI(id);
     }
 
 }
