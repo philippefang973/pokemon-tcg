@@ -19,7 +19,11 @@ contract Card is ERC721URIStorage {
         _mint(user, newCardId);
         _setTokenURI(newCardId, tokenURI);
         _tokenIds.increment();
-        console.log(ownerOf(newCardId));
+        //console.log(ownerOf(newCardId));
         return newCardId;
+    }
+
+    function metadata(uint256 cardId) public view returns (string memory) {
+        return tokenURI(cardId);
     }
 }
