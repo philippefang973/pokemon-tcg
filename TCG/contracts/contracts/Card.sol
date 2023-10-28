@@ -23,4 +23,7 @@ contract Card is ERC721URIStorage {
         return newCardId;
     }
 
+    function metadata(uint256 cardId) public view returns (string memory) {
+        return tokenURI(cardId);
+    }
 }

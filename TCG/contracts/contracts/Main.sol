@@ -5,6 +5,7 @@ import "./Collection.sol";
 import "./Card.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "hardhat/console.sol";
+import "@openzeppelin/contracts/token/ERC721/extensions/IERC721Metadata.sol";
 
 contract Main is Ownable {
     mapping(string => Collection) private collections;
@@ -57,7 +58,6 @@ contract Main is Ownable {
         string memory cardMetadata = collections[collectionName].getCardInfo(cardName);
         uint256 newCardId = cardFactory.assignCard(user, cardMetadata);
         tokenIds[user].push(newCardId);
-        console.log(cardFactory.balanceOf(owner()));
     }
 
     function assignMultiple(
