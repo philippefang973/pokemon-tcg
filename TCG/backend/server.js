@@ -7,6 +7,7 @@ const web3 = new Web3(provider);
 var bodyParser = require('body-parser');
 var deployedContract = null;
 var owner = null;
+var connectedUsers = [];
 
 //Deploy contract function
 async function deployContract() {
@@ -37,17 +38,37 @@ async function deployContract() {
 };
 
 //Function get 5 random cards from sets
-function getBooster(sets) {
-  var res = {};
+async function createBooster(sets,user) {
+  var cardNames = [];
+  var collectionNames = [];
   for (let i = 0; i < 5; i++) {
     const keys = Object.keys(sets);
     const randomName = keys[Math.floor(Math.random() * keys.length)];
     const selectedSet = sets[randomName];
     const randomCard = selectedSet[Math.floor(Math.random() * selectedSet.length)];
-    if (randomName in res) res[randomName].push(randomCard);
-    else res[randomName] = [randomCard];
+    cardNames.push(randomCard.name);
+    collectionNames.push(randomName);
   }
-  return res;
+  const m = await deployedContract.methods.createBooster(cardNames, collectionNames, user).encodeABI();
+  let tx = {
+    from: owner,
+    to: deployedContract.options.address,
+    data: m,
+  };
+  console.log("Creating booster");
+  await web3.eth.sendTransaction(tx);
+}
+
+async function redeemBooster(user) {
+  const m = await deployedContract.methods.redeemBooster(user).encodeABI();
+  let tx = {
+    from: owner,
+    to: deployedContract.options.address,
+    data: m,
+  };
+  const result = await web3.eth.call(tx);    
+  const decodedResult = await web3.eth.abi.decodeParameters(['string'], result);
+  return decodedResult[0].split('::');
 }
 
 //Launch express server
@@ -70,7 +91,7 @@ async function launchServer() {
   app.use(bodyParser.json()); //allow rendering json
 
   const pokemonsets = await pokemonapi.getSets(2); //Get sets from Pokemon API
-
+  
   //Create collection + cards in contract
   for (const name of Object.keys(pokemonsets)) {
     const cardNames = pokemonsets[name].map(item => item.name);
@@ -112,15 +133,22 @@ async function launchServer() {
 
   app.post('/conn', (req, res) => { //A user is connected, check if he's an admin
     console.log("router /conn");
+    connectedUsers.push(req.body.user);
     if (owner == req.body.user) res.json({ userType: "Administrator" })
     else res.json({ userType: "Normal" })
   });
 
-  app.post('/all', (req, res) => {
+  app.post('/all', async (req, res) => {
     console.log("router /all"); //Get foreach set, all user and their possession
-    const postData = req.body; //{user:...}
-    console.log('Data received', postData);
-    //...
+    const m = await deployedContract.methods.showAll(connectedUsers).encodeABI();
+    let tx = {
+      from: owner,
+      to: deployedContract.options.address,
+      data: m,
+    };
+    const result = await web3.eth.call(tx);    
+    const decodedResult = await web3.eth.abi.decodeParameters(['string[][]'], result);
+    console.log(decodedResult);
   });
 
   app.post('/nft', (req, res) => {
@@ -168,7 +196,6 @@ async function launchServer() {
         };
         const result2 = await web3.eth.call(tx2);    
         const decodedResult2 = await web3.eth.abi.decodeParameters(['string'], result2);
-        console.log(decodedResult2);
         var jsonStr = decodeURIComponent(decodedResult2[0].split(',')[1]);
         var json = JSON.parse(jsonStr);
         if (!k.hasOwnProperty(json.set)) k[json.set] = []
@@ -199,26 +226,26 @@ async function launchServer() {
 
   app.post('/booster', async (req, res) => {
     console.log("router /booster"); //Get Booster
-    const postData = req.body; //{user:...};
-    const boost = getBooster(pokemonsets);
-    k = {}
-    for (const key of Object.keys(boost)) {
-      k[key] = [];
-      cardNames = [];
-      for (const elem of boost[key]) {
-        var jsonStr = decodeURIComponent(elem.uri.split(',')[1]);
+    await createBooster(pokemonsets,req.body.user);
+    const uris = await redeemBooster(req.body.user); 
+    var k = {}
+    for (const uri of uris) {
+      var cardNames = [];
+      if (uri.length>0) {
+        var jsonStr = decodeURIComponent(uri.split(',')[1]);
         var json = JSON.parse(jsonStr);
-        k[key].push({set:json.set,name:json.name,images:json.images});
+        if (!k.hasOwnProperty(json.set)) k[json.set] = []
+        k[json.set].push({set:json.set,name:json.name,images:json.images});
         cardNames.push(json.name);
-      }
-      //Mint booster cards
-      const m = await deployedContract.methods.assignMultiple(key, cardNames, req.body.user).encodeABI();
+        //Mint booster cards
+        const m = await deployedContract.methods.assignMultiple(json.set, cardNames, req.body.user).encodeABI();
         let tx = {
           from: req.body.owner,
           to: deployedContract.options.address,
           data: m,
         };
-      await web3.eth.sendTransaction(tx);
+        await web3.eth.sendTransaction(tx);
+      }
     }
     res.json({msg:"Booster redeemed! Here are 5 new cards added to your wallet",booster:k});
   });

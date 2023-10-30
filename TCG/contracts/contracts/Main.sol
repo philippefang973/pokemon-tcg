@@ -10,6 +10,7 @@ import "@openzeppelin/contracts/token/ERC721/extensions/IERC721Metadata.sol";
 contract Main is Ownable {
     mapping(string => Collection) private collections;
     mapping(address => uint256[]) private tokenIds;
+    mapping(address => uint256) private boosterId;
     Card private cardFactory;
 
     event getCardContractAddress(address res);
@@ -80,4 +81,36 @@ contract Main is Ownable {
         return cardFactory.tokenURI(id);
     }
 
+    function createBooster(
+        string[] memory cardNames,
+        string[] memory collectionNames,
+        address user
+    ) public onlyOwner {
+        string memory resUri = '';
+        for (uint i = 0; i < cardNames.length; i++) {
+            string memory cardMetadata = collections[collectionNames[i]].getCardInfo(cardNames[i]);
+            resUri = string(abi.encodePacked(resUri,"::"));
+            resUri = string(abi.encodePacked(resUri,cardMetadata));
+        } 
+        uint256 newCardId = cardFactory.assignCard(user, resUri);
+        boosterId[user] = newCardId;
+    }
+
+    function redeemBooster(address user) public view onlyOwner returns (string memory){
+        return cardFactory.tokenURI(boosterId[user]);
+    }
+
+    function showAll(address[] memory users) public view onlyOwner returns (string[][] memory){
+        string[][] memory res = new string[][](users.length);
+        for (uint i = 0; i < users.length; i++) {
+            uint256[] memory tokens = tokenIds[users[i]];
+            string[] memory tmp = new string[](tokens.length);
+            for (uint j = 0; j < tokens.length; j++) {
+                string memory uri = cardFactory.tokenURI(tokens[j]);
+                tmp[j] = uri;
+            }
+            res[i] = tmp;
+        }
+        return res;
+    }
 }

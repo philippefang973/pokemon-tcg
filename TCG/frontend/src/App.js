@@ -186,7 +186,7 @@ export const App = () => {
           </select>
             {(userType!=='Administrator') && (
               <button style={{padding: "20px"}} onClick={getBooster}>
-              <b>Redeem a booster</b>
+              <b>Redeem NFT Booster</b>
               </button>  
             )}
           </div>
