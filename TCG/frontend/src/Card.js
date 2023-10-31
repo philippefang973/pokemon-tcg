@@ -6,6 +6,7 @@ const Card = ({ card, userType, handlerInputText, handlerSubmit , inputText}) =>
     <div className="card" style={{display: "inline-block", padding:"10px"}}>
       <img src={card.images.small} alt={card.name} width="50%" height="50%" className="enlarge"/><br/>
     <b>{card.name}</b><br/>
+    {card.user && (<small><em>{card.user}</em><br/></small>)}
     {(userType=='Administrator') && (
       <div>
         <input

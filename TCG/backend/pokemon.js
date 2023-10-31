@@ -29,9 +29,7 @@ module.exports = {
                 for (let card of data['data']) {
                     card['set'] = set['name'];
                     const jsonStr = JSON.stringify(card);
-                    const utf8Bytes = new TextEncoder().encode(jsonStr);
-                    const utf8EncodedString = String.fromCharCode.apply(null, utf8Bytes);
-                    const uri = `data:application/json;charset=utf-8,${encodeURIComponent(utf8EncodedString)}`;
+                    const uri = `data:application/json;charset=utf-8,${encodeURIComponent(jsonStr)}`;
                     new_list.push({name:card.name,uri:uri});
                 }
                 return new_list;

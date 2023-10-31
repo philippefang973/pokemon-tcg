@@ -113,4 +113,13 @@ contract Main is Ownable {
         }
         return res;
     }
+
+    function showUser(address user) public view onlyOwner returns (string[] memory){
+        string[] memory res = new string[](tokenIds[user].length);
+        for (uint i = 0; i < tokenIds[user].length; i++) {
+            res[i] = cardFactory.tokenURI(tokenIds[user][i]);
+        }
+        return res;
+    }
+
 }

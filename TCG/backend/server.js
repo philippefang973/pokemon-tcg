@@ -7,7 +7,7 @@ const web3 = new Web3(provider);
 var bodyParser = require('body-parser');
 var deployedContract = null;
 var owner = null;
-var connectedUsers = [];
+var connectedUsers = new Set();
 
 //Deploy contract function
 async function deployContract() {
@@ -117,6 +117,14 @@ async function launchServer() {
   //Routers
   app.post('/', (req, res) => { //Root router, send contract info
     //Render infos
+    var k = {};
+    for (const name of Object.keys(pokemonsets)) {
+      for (const e of pokemonsets[name]) {
+        var jsonStr = decodeURIComponent(e.uri.split(',')[1]);
+        var json = JSON.parse(jsonStr); 
+        k[json.name] = {set:json.set,name:json.name,images:json.images};  
+      }
+    }
     web3.eth.net.getId()
       .then(chainId => {
         data = {
@@ -124,7 +132,7 @@ async function launchServer() {
           "chainId": "0x" + chainId.toString(16),
           "provider": provider
         };
-        res.json(data);
+        res.json({net:data,selections:k});
       })
       .catch(error => {
         res.status(500).json({ error: 'Error getting chain ID' });
@@ -133,14 +141,16 @@ async function launchServer() {
 
   app.post('/conn', (req, res) => { //A user is connected, check if he's an admin
     console.log("router /conn");
-    connectedUsers.push(req.body.user);
+    connectedUsers.add(req.body.user);
     if (owner == req.body.user) res.json({ userType: "Administrator" })
     else res.json({ userType: "Normal" })
   });
 
   app.post('/all', async (req, res) => {
     console.log("router /all"); //Get foreach set, all user and their possession
-    const m = await deployedContract.methods.showAll(connectedUsers).encodeABI();
+    listUsers = [...connectedUsers];
+    listUsers.sort();
+    const m = await deployedContract.methods.showAll(listUsers).encodeABI();
     let tx = {
       from: owner,
       to: deployedContract.options.address,
@@ -148,14 +158,19 @@ async function launchServer() {
     };
     const result = await web3.eth.call(tx);    
     const decodedResult = await web3.eth.abi.decodeParameters(['string[][]'], result);
-    console.log(decodedResult);
-  });
-
-  app.post('/nft', (req, res) => {
-    console.log("router /nft"); //Get infos of a NFT
-    const postData = req.body; //{user:...,token:...};
-    console.log('Data received', postData);
-    //...
+    var k = {}
+    for (let i = 0; i < decodedResult[0].length; i++)  {
+      for (const uri of decodedResult[0][i]) {
+        if (uri.length>0) {
+          var jsonStr = decodeURIComponent(uri.split(',')[1]);
+          var json = JSON.parse(jsonStr);
+          if (!k.hasOwnProperty(json.set)) k[json.set] = []
+          k[json.set].push({set:json.set,name:json.name,images:json.images,user:listUsers[i]});
+        }
+      }
+    }
+    if (Object.keys(k).length>0) res.json(k);
+    else res.json(null);
   });
 
   app.post('/user', async (req, res) => {
@@ -164,7 +179,7 @@ async function launchServer() {
     //If it's admin
     if (req.body.user==owner) {
       //Prepare json from URIs
-      k = {}
+      var k = {}
       for (const key of Object.keys(pokemonsets)) {
         k[key] = []
         for (const elem of pokemonsets[key]) {
@@ -175,31 +190,22 @@ async function launchServer() {
       }
       res.json(k);
     } else { //If it's a normal user
-      //Get NFT ids
-      const m1 = await deployedContract.methods.ownBy(req.body.user).encodeABI();
+      const m = await deployedContract.methods.showUser(req.body.user).encodeABI();
       let tx = {
         from: owner,
         to: deployedContract.options.address,
-        data: m1,
+        data: m,
       };
-      const result = await web3.eth.call(tx);
-      const decodedResult = await web3.eth.abi.decodeParameters(['uint256[]'], result);
-      //Prepare json
-      k = {}
-      for (const id of decodedResult[0]) {
-        //Get URIs from ids
-        const m2 = await deployedContract.methods.readCard(id).encodeABI();
-        let tx2 = {
-          from: owner,
-          to: deployedContract.options.address,
-          data: m2,
-        };
-        const result2 = await web3.eth.call(tx2);    
-        const decodedResult2 = await web3.eth.abi.decodeParameters(['string'], result2);
-        var jsonStr = decodeURIComponent(decodedResult2[0].split(',')[1]);
-        var json = JSON.parse(jsonStr);
-        if (!k.hasOwnProperty(json.set)) k[json.set] = []
-        k[json.set].push({set:json.set,name:json.name,images:json.images});
+      const result = await web3.eth.call(tx);    
+      const decodedResult = await web3.eth.abi.decodeParameters(['string[]'], result);
+      var k = {}
+      for (const uri of decodedResult[0]) {
+        if (uri.length>0) {
+          var jsonStr = decodeURIComponent(uri.split(',')[1]);
+          var json = JSON.parse(jsonStr);
+          if (!k.hasOwnProperty(json.set)) k[json.set] = []
+          k[json.set].push({set:json.set,name:json.name,images:json.images});
+        }
       }
       if (Object.keys(k).length>0) res.json(k);
       else res.json(null);
@@ -211,6 +217,7 @@ async function launchServer() {
     const postData = req.body; //{user:...,set:...,name:...}; 
     if (req.body.user!==owner && req.body.user.match(/^(0x)?[0-9a-fA-F]{40}$/)) { //check if valid address
       console.log(req.body);
+      connectedUsers.add(req.body.user);
       const m = await deployedContract.methods.assign(req.body.set, req.body.name, req.body.user).encodeABI();
       let tx = {
         from: req.body.owner,

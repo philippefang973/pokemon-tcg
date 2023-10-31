@@ -4,6 +4,7 @@ import './App.css'
 import axios from 'axios';
 
 export const App = () => {
+  const [selections, retrieveSelect] = useState(null);
   const [sets, retrieveSets] = useState(null);
   const [net,retrieveNet] = useState(null);  //Var to store network, contract
   const [user,setUser] = useState(null); //Var to store user
@@ -17,7 +18,10 @@ export const App = () => {
     const url = 'http://localhost:5000/';
     const req = {};
     axios.post(url,req)
-    .then(response => retrieveNet(response.data))
+    .then(response => {
+      retrieveNet(response.data.net);
+      retrieveSelect(response.data.selections);
+    })
     .catch(error => console.error(error));
   }, []);
 
@@ -36,11 +40,13 @@ export const App = () => {
     axios.post(url,req)
       .then(response => {
         var d = {}
-        Object.entries(response.data).map(([setName, cards]) => {
-              cards.map(card => { d[card.name]="";});
-        });
-        setInputText(d);
-        retrieveSets(response.data);
+        if (response.data) {
+          Object.entries(response.data).map(([setName, cards]) => {
+                cards.map(card => { d[card.name]="";});
+          });
+          setInputText(d);
+          retrieveSets(response.data);
+        }
       })
       .catch(error => console.error(error));
   };
@@ -51,7 +57,6 @@ export const App = () => {
       const chain = await window.ethereum.request({method: "eth_chainId" });
       if (chain==net.chainId) {
         const accounts = await window.ethereum.request({method: "eth_requestAccounts" });
-        console.log(accounts);
         if (accounts.length>0) 
           setUser(() => {
             getUserType(accounts[0]); 
@@ -93,11 +98,10 @@ export const App = () => {
   //Other button-trigger functions
   const getNFT = (event) => {
     setMsg("");
-    const url = 'http://localhost:5000/nft';
-    const req = {user:user,token:event.target.value};
-    axios.post(url,req)
-      .then(response => retrieveSets(response.data))
-      .catch(error => console.error(error));
+    const name = event.target.value;
+    var k = {};
+    k[selections[name].set] = [selections[name]];
+    retrieveSets(k);
   };
 
   const getBooster = async () => {
@@ -182,7 +186,11 @@ export const App = () => {
           <b>Show all collections</b>
           </button>
           <select style={{padding: "20px", fontWeight:'bold'}} onChange={getNFT}>
-            <option disbaled hidden>Show NFT</option>
+            <option disbaled="true" hidden>Show NFT</option>
+            {Object.entries(selections).map(([cardName, json]) => (
+              <option value={cardName}>{cardName}</option>
+            ))}
+
           </select>
             {(userType!=='Administrator') && (
               <button style={{padding: "20px"}} onClick={getBooster}>
