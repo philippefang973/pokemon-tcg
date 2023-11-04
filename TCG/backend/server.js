@@ -141,7 +141,7 @@ async function launchServer() {
 
   app.post('/conn', (req, res) => { //A user is connected, check if he's an admin
     console.log("router /conn");
-    connectedUsers.add(req.body.user);
+    connectedUsers.add(req.body.user.toLowerCase());
     if (owner == req.body.user) res.json({ userType: "Administrator" })
     else res.json({ userType: "Normal" })
   });
@@ -217,7 +217,7 @@ async function launchServer() {
     const postData = req.body; //{user:...,set:...,name:...}; 
     if (req.body.user!==owner && req.body.user.match(/^(0x)?[0-9a-fA-F]{40}$/)) { //check if valid address
       console.log(req.body);
-      connectedUsers.add(req.body.user);
+      connectedUsers.add(req.body.user.toLowerCase());
       const m = await deployedContract.methods.assign(req.body.set, req.body.name, req.body.user).encodeABI();
       let tx = {
         from: req.body.owner,
