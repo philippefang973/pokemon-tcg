@@ -21,6 +21,7 @@ contract Main is Ownable {
         emit getCardContractAddress(address(cardFactory));
     }
 
+    //Create a collection given a name and a count
     function createCollection(
         string memory name,
         int cardCount
@@ -30,6 +31,7 @@ contract Main is Ownable {
         return name;
     }
 
+    //Create a card in collection
     function createCard(
         string memory collectionName,
         string memory cardName,
@@ -39,6 +41,7 @@ contract Main is Ownable {
         console.log(collections[collectionName].getCardInfo(cardName));
     }
 
+    //Create multiple cards in a collection
     function createMultipleCards(
         string memory collectionName,
         string[] memory cardNames,
@@ -49,6 +52,7 @@ contract Main is Ownable {
         }
     }
 
+    //Mint NFT
     function assign(
         string memory collectionName,
         string memory cardName,
@@ -59,6 +63,7 @@ contract Main is Ownable {
         tokenIds[user].push(newCardId);
     }
 
+    //Mint multiple NFTs
     function assignMultiple(
         string memory collectionName,
         string[] memory cardNames,
@@ -72,15 +77,17 @@ contract Main is Ownable {
         console.log(cardFactory.balanceOf(owner()));
     }
 
-
+    //Get NFT IDs own by a user
     function ownBy(address user) public view onlyOwner returns (uint256[] memory) {
         return tokenIds[user];
     }
     
+    //Get NFT metadata
     function readCard(uint256 id) public view onlyOwner returns (string memory) {
         return cardFactory.tokenURI(id);
     }
 
+    //Create booster given card names and each of their collection
     function createBooster(
         string[] memory cardNames,
         string[] memory collectionNames,
@@ -96,10 +103,12 @@ contract Main is Ownable {
         boosterId[user] = newCardId;
     }
 
+    //Get booster NFT's URI
     function redeemBooster(address user) public view onlyOwner returns (string memory){
         return cardFactory.tokenURI(boosterId[user]);
     }
 
+    //Get all NFTs of list of users
     function showAll(address[] memory users) public view onlyOwner returns (string[][] memory){
         string[][] memory res = new string[][](users.length);
         for (uint i = 0; i < users.length; i++) {
@@ -114,6 +123,7 @@ contract Main is Ownable {
         return res;
     }
 
+    //Get NFTs of user
     function showUser(address user) public view onlyOwner returns (string[] memory){
         string[] memory res = new string[](tokenIds[user].length);
         for (uint i = 0; i < tokenIds[user].length; i++) {

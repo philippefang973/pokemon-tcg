@@ -6,6 +6,7 @@ module.exports = {
         const url_cards = "https://api.pokemontcg.io/v2/cards";
         const head = { 'X-Api-Key': api_key };
         
+        // Given a number of desired sets, return the sets ordered by releaseDate
         async function getPokemonSets(number_sets) {
                 const req = url_sets+"?orderBy=releaseDate&page=1&select=id,name,series,total";
                 const res = await fetch(req, {
@@ -17,6 +18,7 @@ module.exports = {
                 return data['data'].slice(0,number_sets);
         }
 
+        // Given a set, return all the cards it contains
         async function getPokemonCardsFromSet(set) {
                 const req = url_cards+"?q=set.id:"+set["id"]+"&select=name,images";
                 const res = await fetch(req, {
@@ -35,6 +37,7 @@ module.exports = {
                 return new_list;
         }
 
+        // Main function: Given a number of desired sets, return the sets and their cards 
         async function getPokemonData(number_sets) {
             console.log("PokemonAPI: Start");
             const sets = await getPokemonSets(number_sets);
@@ -56,23 +59,4 @@ module.exports = {
         return {};
     }
     },
-
-    getPokemonInfo: async function (id) {
-        try {
-        const api_key = "3b7b645f-ac8d-4054-8ec6-23f56147d361";
-        const url_cards = "https://api.pokemontcg.io/v2/cards";
-        const head = { 'X-Api-Key': api_key };
-
-            const res = await fetch(url_cards+"/"+id, {
-                method: 'GET', 
-                headers: head 
-            });
-            if (!res.ok) throw new Error('Failed Pokemon API call');
-            const data = await res.json();
-            return data['data'];
-        } catch (error) {
-            console.error(error.message);
-            return {};
-        }
-    }
 };

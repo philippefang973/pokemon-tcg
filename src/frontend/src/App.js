@@ -14,7 +14,7 @@ export const App = () => {
 
   //Auto launch in startup
   useEffect(() => { 
-    // Fetch network infos from backend
+    // Fetch network infos and sets infos from backend
     const url = 'http://localhost:5000/';
     const req = {};
     axios.post(url,req)
@@ -25,6 +25,7 @@ export const App = () => {
     .catch(error => console.error(error));
   }, []);
 
+  //Get user type, called when user connecting
   const getUserType = async (u) => {    
     const url = 'http://localhost:5000/conn';
     const req = {user:u};
@@ -33,6 +34,7 @@ export const App = () => {
       .catch(error => console.error(error));    
   }
 
+  //Get user collection handler. Get all nfts the user possesses
   const getUserNFT = async (u) => {
     setMsg("");
     const url = 'http://localhost:5000/user';
@@ -51,7 +53,7 @@ export const App = () => {
       .catch(error => console.error(error));
   };
 
-  //Metamask Connection function
+  //Connection handler. Metamask Connection function
   const connect = async () => {
     try {
       const chain = await window.ethereum.request({method: "eth_chainId" });
@@ -95,7 +97,7 @@ export const App = () => {
     }
   };
 
-  //Other button-trigger functions
+  //Get NFT Handler
   const getNFT = (event) => {
     setMsg("");
     const name = event.target.value;
@@ -104,6 +106,7 @@ export const App = () => {
     retrieveSets(k);
   };
 
+  //Get Booster Handler
   const getBooster = async () => {
     setMsg("");
     const url = 'http://localhost:5000/booster';
@@ -116,6 +119,7 @@ export const App = () => {
       .catch(error => console.error(error));
   };
 
+  //Get all collections
   const getAll = async () => {
     const url = 'http://localhost:5000/all';
     const req = {user:user};
@@ -124,10 +128,12 @@ export const App = () => {
       .catch(error => console.error(error));
   };
 
+  //Auto update input text value function (for Mint)
   const handlerInputText = (id,val) => {
     setInputText({...inputText, [id]:val});
   };
 
+  //Mint handler
   const handlerSubmit = (id) => {
     const url = 'http://localhost:5000/mint';
     const idArr = id.split(";");

@@ -37,7 +37,7 @@ async function deployContract() {
   launchServer();
 };
 
-//Function get 5 random cards from sets
+//Create booster with 5 random cards, create booster NFT
 async function createBooster(sets,user) {
   var cardNames = [];
   var collectionNames = [];
@@ -59,6 +59,7 @@ async function createBooster(sets,user) {
   await web3.eth.sendTransaction(tx);
 }
 
+//Redeem booster NFT
 async function redeemBooster(user) {
   const m = await deployedContract.methods.redeemBooster(user).encodeABI();
   let tx = {
@@ -86,7 +87,6 @@ async function launchServer() {
       }
     },
   };
-
   app.use(cors(corsOptions));
   app.use(bodyParser.json()); //allow rendering json
 
@@ -115,7 +115,8 @@ async function launchServer() {
   }
 
   //Routers
-  app.post('/', (req, res) => { //Root router, send contract info
+  //Root router, send contract info
+  app.post('/', (req, res) => { 
     //Render infos
     var k = {};
     for (const name of Object.keys(pokemonsets)) {
@@ -139,15 +140,17 @@ async function launchServer() {
       });
   });
 
-  app.post('/conn', (req, res) => { //A user is connected, check if he's an admin
+  //A user is connected, check if he's an admin
+  app.post('/conn', (req, res) => { 
     console.log("router /conn");
     connectedUsers.add(req.body.user.toLowerCase());
     if (owner == req.body.user) res.json({ userType: "Administrator" })
     else res.json({ userType: "Normal" })
   });
 
+  //Get foreach set, all user and their possession
   app.post('/all', async (req, res) => {
-    console.log("router /all"); //Get foreach set, all user and their possession
+    console.log("router /all"); 
     listUsers = [...connectedUsers];
     listUsers.sort();
     const m = await deployedContract.methods.showAll(listUsers).encodeABI();
@@ -173,8 +176,9 @@ async function launchServer() {
     else res.json(null);
   });
 
+  //Get NFTs from user
   app.post('/user', async (req, res) => {
-    console.log("router /user"); //Get NFTs from user
+    console.log("router /user"); 
     const postData = req.body; //{user:...};
     //If it's admin
     if (req.body.user==owner) {
@@ -189,7 +193,9 @@ async function launchServer() {
         }
       }
       res.json(k);
-    } else { //If it's a normal user
+    } 
+    //If it's a normal user
+    else { 
       const m = await deployedContract.methods.showUser(req.body.user).encodeABI();
       let tx = {
         from: owner,
@@ -212,8 +218,9 @@ async function launchServer() {
     }
   });
 
+  //Mint nft for user (only admin)
   app.post('/mint', async (req, res) => {
-    console.log("router /mint"); //Mint nft for user (only admin)
+    console.log("router /mint"); 
     const postData = req.body; //{user:...,set:...,name:...}; 
     if (req.body.user!==owner && req.body.user.match(/^(0x)?[0-9a-fA-F]{40}$/)) { //check if valid address
       console.log(req.body);
@@ -231,8 +238,9 @@ async function launchServer() {
     }
   });
 
+  //Get Booster
   app.post('/booster', async (req, res) => {
-    console.log("router /booster"); //Get Booster
+    console.log("router /booster"); 
     await createBooster(pokemonsets,req.body.user);
     const uris = await redeemBooster(req.body.user); 
     var k = {}
@@ -257,6 +265,7 @@ async function launchServer() {
     res.json({msg:"Booster redeemed! Here are 5 new cards added to your wallet",booster:k});
   });
 
+  //listen to port
   const PORT = process.env.PORT || 5000;
   app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);

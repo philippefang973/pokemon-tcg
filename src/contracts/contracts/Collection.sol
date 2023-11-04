@@ -11,10 +11,12 @@ contract Collection {
         cardCount = _cardCount;
     }
 
+    //Add a new card 
     function setCard(string memory cardName, string memory cardURI) public {
         cards[cardName] = cardURI;
     }
 
+    //Get card info from collection
     function getCardInfo(
         string memory cardName
     ) public view returns (string memory) {

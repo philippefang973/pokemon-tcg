@@ -12,6 +12,7 @@ contract Card is ERC721URIStorage {
 
     constructor() ERC721("Card", "CRT") {}
 
+    //Mint NFT given a user and a URI
     function assignCard(
         address user,
         string memory uri
@@ -23,6 +24,7 @@ contract Card is ERC721URIStorage {
         return newCardId;
     }
 
+    //Get NFT metadata given an ID
     function metadata(uint256 cardId) public view returns (string memory) {
         return tokenURI(cardId);
     }
